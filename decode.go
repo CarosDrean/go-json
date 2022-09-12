@@ -7,10 +7,10 @@ import (
 	"reflect"
 	"unsafe"
 
-	"github.com/goccy/go-json/internal/decoder"
-	"github.com/goccy/go-json/internal/defaults"
-	"github.com/goccy/go-json/internal/errors"
-	"github.com/goccy/go-json/internal/runtime"
+	"github.com/CarosDrean/go-json/internal/decoder"
+	"github.com/CarosDrean/go-json/internal/defaults"
+	"github.com/CarosDrean/go-json/internal/errors"
+	"github.com/CarosDrean/go-json/internal/runtime"
 )
 
 type Decoder struct {
