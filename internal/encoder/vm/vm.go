@@ -7,9 +7,9 @@ import (
 	"sort"
 	"unsafe"
 
-	"github.com/goccy/go-json/internal/defaults"
-	"github.com/goccy/go-json/internal/encoder"
-	"github.com/goccy/go-json/internal/runtime"
+	"github.com/CarosDrean/go-json/internal/defaults"
+	"github.com/CarosDrean/go-json/internal/encoder"
+	"github.com/CarosDrean/go-json/internal/runtime"
 )
 
 func Run(ctx *encoder.RuntimeContext, b []byte, codeSet *encoder.OpcodeSet) ([]byte, error) {

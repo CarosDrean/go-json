@@ -4,7 +4,7 @@ import (
 	"testing"
 	"unsafe"
 
-	"github.com/goccy/go-json/internal/defaults"
+	"github.com/CarosDrean/go-json/internal/defaults"
 )
 
 func TestDumpOpcode(t *testing.T) {

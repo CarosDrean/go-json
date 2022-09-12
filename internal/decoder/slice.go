@@ -5,8 +5,8 @@ import (
 	"sync"
 	"unsafe"
 
-	"github.com/goccy/go-json/internal/errors"
-	"github.com/goccy/go-json/internal/runtime"
+	"github.com/CarosDrean/go-json/internal/errors"
+	"github.com/CarosDrean/go-json/internal/runtime"
 )
 
 var (
