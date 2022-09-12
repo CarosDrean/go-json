@@ -7,6 +7,7 @@ import (
 	"sort"
 	"unsafe"
 
+	"github.com/goccy/go-json/internal/defaults"
 	"github.com/goccy/go-json/internal/encoder"
 	"github.com/goccy/go-json/internal/runtime"
 )
@@ -203,7 +204,7 @@ func Run(ctx *encoder.RuntimeContext, b []byte, codeSet *encoder.OpcodeSet) ([]b
 				}
 			}
 			ctx.KeepRefs = append(ctx.KeepRefs, up)
-			ifaceCodeSet, err := encoder.CompileToGetCodeSet(ctx, uintptr(unsafe.Pointer(typ)))
+			ifaceCodeSet, err := encoder.CompileToGetCodeSet(ctx, uintptr(unsafe.Pointer(typ)), defaults.DefaultTag)
 			if err != nil {
 				return nil, err
 			}

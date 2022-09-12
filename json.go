@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/goccy/go-json/internal/defaults"
 	"github.com/goccy/go-json/internal/encoder"
 )
 
@@ -173,17 +174,21 @@ func Marshal(v interface{}) ([]byte, error) {
 
 // MarshalNoEscape returns the JSON encoding of v and doesn't escape v.
 func MarshalNoEscape(v interface{}) ([]byte, error) {
-	return marshalNoEscape(v)
+	return marshalNoEscape(v, defaults.DefaultTag)
 }
 
 // MarshalContext returns the JSON encoding of v with context.Context and EncodeOption.
 func MarshalContext(ctx context.Context, v interface{}, optFuncs ...EncodeOptionFunc) ([]byte, error) {
-	return marshalContext(ctx, v, optFuncs...)
+	return marshalContext(ctx, v, defaults.DefaultTag, optFuncs...)
 }
 
 // MarshalWithOption returns the JSON encoding of v with EncodeOption.
 func MarshalWithOption(v interface{}, optFuncs ...EncodeOptionFunc) ([]byte, error) {
-	return marshal(v, optFuncs...)
+	return marshal(v, defaults.DefaultTag, optFuncs...)
+}
+
+func MarshalWithCustomTag(v interface{}, customTag string) ([]byte, error) {
+	return marshal(v, customTag)
 }
 
 // MarshalIndent is like Marshal but applies Indent to format the output.
@@ -195,7 +200,7 @@ func MarshalIndent(v interface{}, prefix, indent string) ([]byte, error) {
 
 // MarshalIndentWithOption is like Marshal but applies Indent to format the output with EncodeOption.
 func MarshalIndentWithOption(v interface{}, prefix, indent string, optFuncs ...EncodeOptionFunc) ([]byte, error) {
-	return marshalIndent(v, prefix, indent, optFuncs...)
+	return marshalIndent(v, prefix, indent, defaults.DefaultTag, optFuncs...)
 }
 
 // Unmarshal parses the JSON-encoded data and stores the result
@@ -273,22 +278,26 @@ func MarshalIndentWithOption(v interface{}, prefix, indent string, optFuncs ...E
 // character U+FFFD.
 //
 func Unmarshal(data []byte, v interface{}) error {
-	return unmarshal(data, v)
+	return unmarshal(data, v, defaults.DefaultTag)
 }
 
 // UnmarshalContext parses the JSON-encoded data and stores the result
 // in the value pointed to by v. If you implement the UnmarshalerContext interface,
 // call it with ctx as an argument.
 func UnmarshalContext(ctx context.Context, data []byte, v interface{}, optFuncs ...DecodeOptionFunc) error {
-	return unmarshalContext(ctx, data, v)
+	return unmarshalContext(ctx, data, v, defaults.DefaultTag)
 }
 
 func UnmarshalWithOption(data []byte, v interface{}, optFuncs ...DecodeOptionFunc) error {
-	return unmarshal(data, v, optFuncs...)
+	return unmarshal(data, v, defaults.DefaultTag, optFuncs...)
+}
+
+func UnmarshalWithCustomTag(data []byte, v interface{}, customTag string) error {
+	return unmarshal(data, v, customTag)
 }
 
 func UnmarshalNoEscape(data []byte, v interface{}, optFuncs ...DecodeOptionFunc) error {
-	return unmarshalNoEscape(data, v, optFuncs...)
+	return unmarshalNoEscape(data, v, defaults.DefaultTag, optFuncs...)
 }
 
 // A Token holds a value of one of these types:
@@ -347,7 +356,7 @@ func HTMLEscape(dst *bytes.Buffer, src []byte) {
 	if err := dec.Decode(&v); err != nil {
 		return
 	}
-	buf, _ := marshal(v)
+	buf, _ := marshal(v, defaults.DefaultTag)
 	dst.Write(buf)
 }
 

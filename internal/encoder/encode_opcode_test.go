@@ -3,6 +3,8 @@ package encoder
 import (
 	"testing"
 	"unsafe"
+
+	"github.com/goccy/go-json/internal/defaults"
 )
 
 func TestDumpOpcode(t *testing.T) {
@@ -12,7 +14,7 @@ func TestDumpOpcode(t *testing.T) {
 	header := (*emptyInterface)(unsafe.Pointer(&v))
 	typ := header.typ
 	typeptr := uintptr(unsafe.Pointer(typ))
-	codeSet, err := CompileToGetCodeSet(ctx, typeptr)
+	codeSet, err := CompileToGetCodeSet(ctx, typeptr, defaults.DefaultTag)
 	if err != nil {
 		t.Fatal(err)
 	}

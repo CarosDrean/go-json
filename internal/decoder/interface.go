@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"unsafe"
 
+	"github.com/goccy/go-json/internal/defaults"
 	"github.com/goccy/go-json/internal/errors"
 	"github.com/goccy/go-json/internal/runtime"
 )
@@ -327,7 +328,7 @@ func (d *interfaceDecoder) DecodeStream(s *Stream, depth int64, p unsafe.Pointer
 		*(*interface{})(p) = nil
 		return nil
 	}
-	decoder, err := CompileToGetDecoder(typ)
+	decoder, err := CompileToGetDecoder(typ, defaults.DefaultTag)
 	if err != nil {
 		return err
 	}
@@ -392,7 +393,7 @@ func (d *interfaceDecoder) Decode(ctx *RuntimeContext, cursor, depth int64, p un
 		**(**interface{})(unsafe.Pointer(&p)) = nil
 		return cursor, nil
 	}
-	decoder, err := CompileToGetDecoder(typ)
+	decoder, err := CompileToGetDecoder(typ, defaults.DefaultTag)
 	if err != nil {
 		return 0, err
 	}
