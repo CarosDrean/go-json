@@ -6,6 +6,7 @@ import (
 	"os"
 	"unsafe"
 
+	"github.com/goccy/go-json/internal/defaults"
 	"github.com/goccy/go-json/internal/encoder"
 	"github.com/goccy/go-json/internal/encoder/vm"
 	"github.com/goccy/go-json/internal/encoder/vm_color"
@@ -39,7 +40,7 @@ func (e *Encoder) EncodeWithOption(v interface{}, optFuncs ...EncodeOptionFunc) 
 	ctx := encoder.TakeRuntimeContext()
 	ctx.Option.Flag = 0
 
-	err := e.encodeWithOption(ctx, v, optFuncs...)
+	err := e.encodeWithOption(ctx, v, defaults.DefaultTag, optFuncs...)
 
 	encoder.ReleaseRuntimeContext(ctx)
 	return err
@@ -52,13 +53,13 @@ func (e *Encoder) EncodeContext(ctx context.Context, v interface{}, optFuncs ...
 	rctx.Option.Flag |= encoder.ContextOption
 	rctx.Option.Context = ctx
 
-	err := e.encodeWithOption(rctx, v, optFuncs...)
+	err := e.encodeWithOption(rctx, v, defaults.DefaultTag, optFuncs...)
 
 	encoder.ReleaseRuntimeContext(rctx)
 	return err
 }
 
-func (e *Encoder) encodeWithOption(ctx *encoder.RuntimeContext, v interface{}, optFuncs ...EncodeOptionFunc) error {
+func (e *Encoder) encodeWithOption(ctx *encoder.RuntimeContext, v interface{}, customTag string, optFuncs ...EncodeOptionFunc) error {
 	if e.enabledHTMLEscape {
 		ctx.Option.Flag |= encoder.HTMLEscapeOption
 	}
@@ -72,9 +73,9 @@ func (e *Encoder) encodeWithOption(ctx *encoder.RuntimeContext, v interface{}, o
 		err error
 	)
 	if e.enabledIndent {
-		buf, err = encodeIndent(ctx, v, e.prefix, e.indentStr)
+		buf, err = encodeIndent(ctx, v, e.prefix, e.indentStr, customTag)
 	} else {
-		buf, err = encode(ctx, v)
+		buf, err = encode(ctx, v, customTag)
 	}
 	if err != nil {
 		return err
@@ -92,7 +93,7 @@ func (e *Encoder) encodeWithOption(ctx *encoder.RuntimeContext, v interface{}, o
 }
 
 // SetEscapeHTML specifies whether problematic HTML characters should be escaped inside JSON quoted strings.
-// The default behavior is to escape &, <, and > to \u0026, \u003c, and \u003e to avoid certain safety problems that can arise when embedding JSON in HTML.
+// The defaults behavior is to escape &, <, and > to \u0026, \u003c, and \u003e to avoid certain safety problems that can arise when embedding JSON in HTML.
 //
 // In non-HTML settings where the escaping interferes with the readability of the output, SetEscapeHTML(false) disables this behavior.
 func (e *Encoder) SetEscapeHTML(on bool) {
@@ -111,7 +112,7 @@ func (e *Encoder) SetIndent(prefix, indent string) {
 	e.enabledIndent = true
 }
 
-func marshalContext(ctx context.Context, v interface{}, optFuncs ...EncodeOptionFunc) ([]byte, error) {
+func marshalContext(ctx context.Context, v interface{}, customTag string, optFuncs ...EncodeOptionFunc) ([]byte, error) {
 	rctx := encoder.TakeRuntimeContext()
 	rctx.Option.Flag = 0
 	rctx.Option.Flag = encoder.HTMLEscapeOption | encoder.NormalizeUTF8Option | encoder.ContextOption
@@ -120,7 +121,7 @@ func marshalContext(ctx context.Context, v interface{}, optFuncs ...EncodeOption
 		optFunc(rctx.Option)
 	}
 
-	buf, err := encode(rctx, v)
+	buf, err := encode(rctx, v, customTag)
 	if err != nil {
 		encoder.ReleaseRuntimeContext(rctx)
 		return nil, err
@@ -138,7 +139,7 @@ func marshalContext(ctx context.Context, v interface{}, optFuncs ...EncodeOption
 	return copied, nil
 }
 
-func marshal(v interface{}, optFuncs ...EncodeOptionFunc) ([]byte, error) {
+func marshal(v interface{}, customTag string, optFuncs ...EncodeOptionFunc) ([]byte, error) {
 	ctx := encoder.TakeRuntimeContext()
 
 	ctx.Option.Flag = 0
@@ -147,7 +148,7 @@ func marshal(v interface{}, optFuncs ...EncodeOptionFunc) ([]byte, error) {
 		optFunc(ctx.Option)
 	}
 
-	buf, err := encode(ctx, v)
+	buf, err := encode(ctx, v, customTag)
 	if err != nil {
 		encoder.ReleaseRuntimeContext(ctx)
 		return nil, err
@@ -165,13 +166,13 @@ func marshal(v interface{}, optFuncs ...EncodeOptionFunc) ([]byte, error) {
 	return copied, nil
 }
 
-func marshalNoEscape(v interface{}) ([]byte, error) {
+func marshalNoEscape(v interface{}, customTag string) ([]byte, error) {
 	ctx := encoder.TakeRuntimeContext()
 
 	ctx.Option.Flag = 0
 	ctx.Option.Flag |= (encoder.HTMLEscapeOption | encoder.NormalizeUTF8Option)
 
-	buf, err := encodeNoEscape(ctx, v)
+	buf, err := encodeNoEscape(ctx, v, customTag)
 	if err != nil {
 		encoder.ReleaseRuntimeContext(ctx)
 		return nil, err
@@ -189,7 +190,7 @@ func marshalNoEscape(v interface{}) ([]byte, error) {
 	return copied, nil
 }
 
-func marshalIndent(v interface{}, prefix, indent string, optFuncs ...EncodeOptionFunc) ([]byte, error) {
+func marshalIndent(v interface{}, prefix, indent, customTag string, optFuncs ...EncodeOptionFunc) ([]byte, error) {
 	ctx := encoder.TakeRuntimeContext()
 
 	ctx.Option.Flag = 0
@@ -198,7 +199,7 @@ func marshalIndent(v interface{}, prefix, indent string, optFuncs ...EncodeOptio
 		optFunc(ctx.Option)
 	}
 
-	buf, err := encodeIndent(ctx, v, prefix, indent)
+	buf, err := encodeIndent(ctx, v, prefix, indent, customTag)
 	if err != nil {
 		encoder.ReleaseRuntimeContext(ctx)
 		return nil, err
@@ -212,7 +213,7 @@ func marshalIndent(v interface{}, prefix, indent string, optFuncs ...EncodeOptio
 	return copied, nil
 }
 
-func encode(ctx *encoder.RuntimeContext, v interface{}) ([]byte, error) {
+func encode(ctx *encoder.RuntimeContext, v interface{}, customTag string) ([]byte, error) {
 	b := ctx.Buf[:0]
 	if v == nil {
 		b = encoder.AppendNull(ctx, b)
@@ -223,7 +224,7 @@ func encode(ctx *encoder.RuntimeContext, v interface{}) ([]byte, error) {
 	typ := header.typ
 
 	typeptr := uintptr(unsafe.Pointer(typ))
-	codeSet, err := encoder.CompileToGetCodeSet(ctx, typeptr)
+	codeSet, err := encoder.CompileToGetCodeSet(ctx, typeptr, customTag)
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +241,7 @@ func encode(ctx *encoder.RuntimeContext, v interface{}) ([]byte, error) {
 	return buf, nil
 }
 
-func encodeNoEscape(ctx *encoder.RuntimeContext, v interface{}) ([]byte, error) {
+func encodeNoEscape(ctx *encoder.RuntimeContext, v interface{}, customTag string) ([]byte, error) {
 	b := ctx.Buf[:0]
 	if v == nil {
 		b = encoder.AppendNull(ctx, b)
@@ -251,7 +252,7 @@ func encodeNoEscape(ctx *encoder.RuntimeContext, v interface{}) ([]byte, error) 
 	typ := header.typ
 
 	typeptr := uintptr(unsafe.Pointer(typ))
-	codeSet, err := encoder.CompileToGetCodeSet(ctx, typeptr)
+	codeSet, err := encoder.CompileToGetCodeSet(ctx, typeptr, customTag)
 	if err != nil {
 		return nil, err
 	}
@@ -267,7 +268,7 @@ func encodeNoEscape(ctx *encoder.RuntimeContext, v interface{}) ([]byte, error) 
 	return buf, nil
 }
 
-func encodeIndent(ctx *encoder.RuntimeContext, v interface{}, prefix, indent string) ([]byte, error) {
+func encodeIndent(ctx *encoder.RuntimeContext, v interface{}, prefix, indent, customTag string) ([]byte, error) {
 	b := ctx.Buf[:0]
 	if v == nil {
 		b = encoder.AppendNull(ctx, b)
@@ -278,7 +279,7 @@ func encodeIndent(ctx *encoder.RuntimeContext, v interface{}, prefix, indent str
 	typ := header.typ
 
 	typeptr := uintptr(unsafe.Pointer(typ))
-	codeSet, err := encoder.CompileToGetCodeSet(ctx, typeptr)
+	codeSet, err := encoder.CompileToGetCodeSet(ctx, typeptr, customTag)
 	if err != nil {
 		return nil, err
 	}

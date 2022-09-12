@@ -8,6 +8,7 @@ import (
 	"unsafe"
 
 	"github.com/goccy/go-json/internal/decoder"
+	"github.com/goccy/go-json/internal/defaults"
 	"github.com/goccy/go-json/internal/errors"
 	"github.com/goccy/go-json/internal/runtime"
 )
@@ -25,7 +26,7 @@ type emptyInterface struct {
 	ptr unsafe.Pointer
 }
 
-func unmarshal(data []byte, v interface{}, optFuncs ...DecodeOptionFunc) error {
+func unmarshal(data []byte, v interface{}, customTag string, optFuncs ...DecodeOptionFunc) error {
 	src := make([]byte, len(data)+1) // append nul byte to the end
 	copy(src, data)
 
@@ -34,7 +35,7 @@ func unmarshal(data []byte, v interface{}, optFuncs ...DecodeOptionFunc) error {
 	if err := validateType(header.typ, uintptr(header.ptr)); err != nil {
 		return err
 	}
-	dec, err := decoder.CompileToGetDecoder(header.typ)
+	dec, err := decoder.CompileToGetDecoder(header.typ, customTag)
 	if err != nil {
 		return err
 	}
@@ -53,7 +54,7 @@ func unmarshal(data []byte, v interface{}, optFuncs ...DecodeOptionFunc) error {
 	return validateEndBuf(src, cursor)
 }
 
-func unmarshalContext(ctx context.Context, data []byte, v interface{}, optFuncs ...DecodeOptionFunc) error {
+func unmarshalContext(ctx context.Context, data []byte, v interface{}, customTag string, optFuncs ...DecodeOptionFunc) error {
 	src := make([]byte, len(data)+1) // append nul byte to the end
 	copy(src, data)
 
@@ -62,7 +63,7 @@ func unmarshalContext(ctx context.Context, data []byte, v interface{}, optFuncs 
 	if err := validateType(header.typ, uintptr(header.ptr)); err != nil {
 		return err
 	}
-	dec, err := decoder.CompileToGetDecoder(header.typ)
+	dec, err := decoder.CompileToGetDecoder(header.typ, customTag)
 	if err != nil {
 		return err
 	}
@@ -83,7 +84,7 @@ func unmarshalContext(ctx context.Context, data []byte, v interface{}, optFuncs 
 	return validateEndBuf(src, cursor)
 }
 
-func unmarshalNoEscape(data []byte, v interface{}, optFuncs ...DecodeOptionFunc) error {
+func unmarshalNoEscape(data []byte, v interface{}, customTag string, optFuncs ...DecodeOptionFunc) error {
 	src := make([]byte, len(data)+1) // append nul byte to the end
 	copy(src, data)
 
@@ -92,7 +93,7 @@ func unmarshalNoEscape(data []byte, v interface{}, optFuncs ...DecodeOptionFunc)
 	if err := validateType(header.typ, uintptr(header.ptr)); err != nil {
 		return err
 	}
-	dec, err := decoder.CompileToGetDecoder(header.typ)
+	dec, err := decoder.CompileToGetDecoder(header.typ, customTag)
 	if err != nil {
 		return err
 	}
@@ -188,7 +189,7 @@ func (d *Decoder) DecodeWithOption(v interface{}, optFuncs ...DecodeOptionFunc) 
 		return err
 	}
 
-	dec, err := decoder.CompileToGetDecoder(typ)
+	dec, err := decoder.CompileToGetDecoder(typ, defaults.DefaultTag)
 	if err != nil {
 		return err
 	}
